@@ -122,5 +122,23 @@ namespace SilafLibraryManagementSystem.Services
 
             Console.WriteLine("✅ Book returned.");
         }
+        public void ListAllBooks()
+        {
+            var books = bookRepo.GetAll();
+            if (!books.Any())
+            {
+                Console.WriteLine("📭 No books found.");
+                return;
+            }
+
+            Console.WriteLine("\n📚 All Books:");
+            foreach (var b in books)
+            {
+                string status = b.IsAvailable ? "Available" : "Borrowed";
+                Console.WriteLine($"ID: {b.Id}, Title: {b.Title}, Author: {b.Author}, Status: {status}");
+            }
+        }
+
+
     }
 }

@@ -20,6 +20,8 @@ namespace SilafLibraryManagementSystem
                 Console.WriteLine("2. Register Member");
                 Console.WriteLine("3. Borrow Book");
                 Console.WriteLine("4. Return Book");
+                Console.WriteLine("5. List All Books");
+
                 Console.WriteLine("0. Exit");
                 Console.Write("Choose an option: ");
 
@@ -74,6 +76,11 @@ namespace SilafLibraryManagementSystem
                         var returnMemId = Console.ReadLine();
                         libraryService.ReturnBook(returnBookId, returnMemId);
                         break;
+
+                    case "5":
+                        libraryService.ListAllBooks();
+                        break;
+
 
                     case "0":
                         Console.WriteLine("👋 Goodbye!");
