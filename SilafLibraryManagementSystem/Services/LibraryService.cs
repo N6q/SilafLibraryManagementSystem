@@ -3,8 +3,6 @@ using SilafLibraryManagementSystem.Repositories.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SilafLibraryManagementSystem.Services
 {
@@ -14,10 +12,7 @@ namespace SilafLibraryManagementSystem.Services
         private readonly IMemberRepository memberRepo;
         private readonly IBorrowRecordRepository borrowRepo;
 
-        public LibraryService(
-            IBookRepository bookRepo,
-            IMemberRepository memberRepo,
-            IBorrowRecordRepository borrowRepo)
+        public LibraryService(IBookRepository bookRepo, IMemberRepository memberRepo, IBorrowRecordRepository borrowRepo)
         {
             this.bookRepo = bookRepo;
             this.memberRepo = memberRepo;
@@ -26,56 +21,105 @@ namespace SilafLibraryManagementSystem.Services
 
         public void AddBook(Book book)
         {
-            if (string.IsNullOrWhiteSpace(book.Id))
+            Console.Clear();
+            string bookId;
+
+            while (true)
             {
-                Console.WriteLine("❌ Book ID is required.");
-                return;
+                Console.Write("Enter Book ID: ");
+                bookId = Console.ReadLine();
+
+                if (string.IsNullOrWhiteSpace(bookId))
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("❌ Book ID cannot be empty.");
+                    Console.ResetColor();
+                    continue;
+                }
+
+                if (bookRepo.GetById(bookId) != null)
+                {
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.WriteLine("⚠️ Book with this ID already exists. Please enter a different one.");
+                    Console.ResetColor();
+                    continue;
+                }
+
+                break;
             }
 
-            if (bookRepo.GetById(book.Id) != null)
-            {
-                Console.WriteLine("⚠️ Book with this ID already exists.");
-                return;
-            }
+            Console.Write("Title: ");
+            string title = Console.ReadLine();
 
-            bookRepo.Add(book);
-            Console.WriteLine("✅ Book added.");
+            Console.Write("Author: ");
+            string author = Console.ReadLine();
+
+            bookRepo.Add(new Book
+            {
+                Id = bookId,
+                Title = title,
+                Author = author,
+                IsAvailable = true
+            });
+
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("✅ Book added successfully.");
+            Console.ResetColor();
         }
-
 
         public void RegisterMember(Member member)
         {
+            Console.Clear();
+
             if (string.IsNullOrWhiteSpace(member.Id))
             {
+                Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("❌ National ID is required.");
+                Console.ResetColor();
                 return;
             }
 
             if (memberRepo.GetById(member.Id) != null)
             {
+                Console.ForegroundColor = ConsoleColor.Yellow;
                 Console.WriteLine("⚠️ Member with this ID already exists.");
+                Console.ResetColor();
                 return;
             }
 
             memberRepo.Add(member);
+            Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("✅ Member registered.");
+            Console.ResetColor();
         }
-
 
         public void BorrowBook(string bookId, string memberId)
         {
+            Console.Clear();
+            if (string.IsNullOrWhiteSpace(bookId) || string.IsNullOrWhiteSpace(memberId))
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("❌ Book ID and Member ID are required.");
+                Console.ResetColor();
+                return;
+            }
+
             var book = bookRepo.GetById(bookId);
             var member = memberRepo.GetById(memberId);
 
             if (book == null || member == null)
             {
+                Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("❌ Book or member not found.");
+                Console.ResetColor();
                 return;
             }
 
             if (!book.IsAvailable)
             {
+                Console.ForegroundColor = ConsoleColor.Yellow;
                 Console.WriteLine("⚠️ Book is not available.");
+                Console.ResetColor();
                 return;
             }
 
@@ -92,17 +136,30 @@ namespace SilafLibraryManagementSystem.Services
             };
 
             borrowRepo.Add(borrowRecord);
-            Console.WriteLine("📚 Book borrowed.");
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("📚 Book borrowed successfully.");
+            Console.ResetColor();
         }
 
         public void ReturnBook(string bookId, string memberId)
         {
+            Console.Clear();
+            if (string.IsNullOrWhiteSpace(bookId) || string.IsNullOrWhiteSpace(memberId))
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("❌ Book ID and Member ID are required.");
+                Console.ResetColor();
+                return;
+            }
+
             var book = bookRepo.GetById(bookId);
             var member = memberRepo.GetById(memberId);
 
             if (book == null || member == null)
             {
+                Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("❌ Book or member not found.");
+                Console.ResetColor();
                 return;
             }
 
@@ -110,7 +167,9 @@ namespace SilafLibraryManagementSystem.Services
 
             if (borrow == null || borrow.MemberId != memberId)
             {
+                Console.ForegroundColor = ConsoleColor.Yellow;
                 Console.WriteLine("⚠️ No active borrow found for this book by this member.");
+                Console.ResetColor();
                 return;
             }
 
@@ -120,25 +179,175 @@ namespace SilafLibraryManagementSystem.Services
             book.IsAvailable = true;
             bookRepo.Update(book);
 
-            Console.WriteLine("✅ Book returned.");
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("✅ Book returned successfully.");
+            Console.ResetColor();
         }
+
         public void ListAllBooks()
         {
+            Console.Clear();
             var books = bookRepo.GetAll();
+
             if (!books.Any())
             {
+                Console.ForegroundColor = ConsoleColor.Yellow;
                 Console.WriteLine("📭 No books found.");
+                Console.ResetColor();
                 return;
             }
 
-            Console.WriteLine("\n📚 All Books:");
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine("╔══════════════════════════════════════════════════════════════════╗");
+            Console.WriteLine("║                        📚 All Books                               ║");
+            Console.WriteLine("╠══════════════════════════════════════════════════════════════════╣");
+            Console.WriteLine("║ ID         │ Title                    │ Author       │ Status     ║");
+            Console.WriteLine("╟────────────┼──────────────────────────┼──────────────┼────────────╢");
+            Console.ResetColor();
+
             foreach (var b in books)
             {
                 string status = b.IsAvailable ? "Available" : "Borrowed";
-                Console.WriteLine($"ID: {b.Id}, Title: {b.Title}, Author: {b.Author}, Status: {status}");
+                Console.WriteLine($"║ {b.Id,-10} │ {b.Title,-24} │ {b.Author,-12} │ {status,-10} ║");
             }
+
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine("╚══════════════════════════════════════════════════════════════════╝");
+            Console.ResetColor();
         }
 
+        public void ListAllMembers()
+        {
+            Console.Clear();
+            var members = memberRepo.GetAll();
 
+            if (!members.Any())
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine("📭 No members found.");
+                Console.ResetColor();
+                return;
+            }
+
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine("╔══════════════════════════════════════════════╗");
+            Console.WriteLine("║                👥 All Members                ║");
+            Console.WriteLine("╠══════════════════════════════════════════════╣");
+            Console.WriteLine("║ National ID           │ Name                 ║");
+            Console.WriteLine("╟───────────────────────┼──────────────────────╢");
+            Console.ResetColor();
+
+            foreach (var m in members)
+            {
+                Console.WriteLine($"║ {m.Id,-21} │ {m.Name,-20} ║");
+            }
+
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine("╚══════════════════════════════════════════════╝");
+            Console.ResetColor();
+        }
+
+        public void SearchBookByTitle(string title)
+        {
+            Console.Clear();
+            if (string.IsNullOrWhiteSpace(title))
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("❌ Title cannot be empty.");
+                Console.ResetColor();
+                return;
+            }
+
+            var matches = bookRepo.SearchByTitle(title);
+            if (!matches.Any())
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine("🔍 No matching books found.");
+                Console.ResetColor();
+                return;
+            }
+
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine("╔══════════════════════════════════════════════════════════════════╗");
+            Console.WriteLine("║                  🔎 Matching Books by Title                      ║");
+            Console.WriteLine("╠══════════════════════════════════════════════════════════════════╣");
+            Console.WriteLine("║ ID         │ Title                    │ Author       │ Status     ║");
+            Console.WriteLine("╟────────────┼──────────────────────────┼──────────────┼────────────╢");
+            Console.ResetColor();
+
+            foreach (var b in matches)
+            {
+                string status = b.IsAvailable ? "Available" : "Borrowed";
+                Console.WriteLine($"║ {b.Id,-10} │ {b.Title,-24} │ {b.Author,-12} │ {status,-10} ║");
+            }
+
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine("╚══════════════════════════════════════════════════════════════════╝");
+            Console.ResetColor();
+        }
+
+        public void ViewBorrowRecords()
+        {
+            Console.Clear();
+            var records = borrowRepo.GetAll();
+
+            if (!records.Any())
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine("📭 No borrow records found.");
+                Console.ResetColor();
+                return;
+            }
+
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine("╔════════════════════════════════════════════════════════════════════════════════════╗");
+            Console.WriteLine("║                              📜 Borrow Records                                     ║");
+            Console.WriteLine("╠════════════════════════════════════════════════════════════════════════════════════╣");
+            Console.WriteLine("║ Record ID │ Book ID │ Member ID │ Borrow Date        │ Return Date                ║");
+            Console.WriteLine("╟───────────┼─────────┼───────────┼────────────────────┼────────────────────────────╢");
+            Console.ResetColor();
+
+            foreach (var r in records)
+            {
+                string returnStatus = r.ReturnDate.HasValue ? r.ReturnDate.Value.ToString("g") : "Not Returned";
+                Console.WriteLine($"║ {r.Id[..8],-9} │ {r.BookId,-7} │ {r.MemberId,-9} │ {r.BorrowDate:g,-18} │ {returnStatus,-26} ║");
+            }
+
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine("╚════════════════════════════════════════════════════════════════════════════════════╝");
+            Console.ResetColor();
+        }
+
+        public void ShowUnreturnedBooks()
+        {
+            Console.Clear();
+            var records = borrowRepo.GetAll().Where(r => r.ReturnDate == null);
+
+            if (!records.Any())
+            {
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("✅ All books are returned.");
+                Console.ResetColor();
+                return;
+            }
+
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine("╔══════════════════════════════════════════════════════════════════════╗");
+            Console.WriteLine("║                    🚨 Currently Borrowed Books                       ║");
+            Console.WriteLine("╠══════════════════════════════════════════════════════════════════════╣");
+            Console.WriteLine("║ Book ID │ Title                    │ Member ID   │ Borrow Date       ║");
+            Console.WriteLine("╟─────────┼──────────────────────────┼─────────────┼───────────────────╢");
+            Console.ResetColor();
+
+            foreach (var r in records)
+            {
+                var book = bookRepo.GetById(r.BookId);
+                Console.WriteLine($"║ {r.BookId,-8} │ {book?.Title,-24} │ {r.MemberId,-11} │ {r.BorrowDate:g,-17} ║");
+            }
+
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine("╚══════════════════════════════════════════════════════════════════════╝");
+            Console.ResetColor();
+        }
     }
 }
